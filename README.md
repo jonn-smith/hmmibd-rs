@@ -120,6 +120,16 @@ input data options:
           a built-in filtering criteria will be used, and a temporary
           configuration file consistent with the built-in criteria named
           "tmp_bcf_filter_config.toml" will be generated in the current folder
+      --absent-ad-as <ABSENT_AD_AS>
+          Optional: in --bcf-read-mode dominant-allele, how to call a genotype
+          whose FORMAT/AD values are entirely absent when FORMAT/GT cannot
+          disambiguate it either (GT absent). "missing" treats it as missing
+          data (-1); "ref" treats it as homozygous reference (allele 0). "ref"
+          fabricates calls and is appropriate only for callsets whose convention
+          is "no AD means reference"; for joint callsets where covered hom-refs
+          carry real AD, absent AD means no coverage, so use "missing". When
+          set, this overrides the `absent_ad_as` value from --bcf-filter-config
+          [possible values: missing, ref]
 
 output data:
   -o, --output <OUTPUT>  Optional: output prefix. If not specified, the prefix

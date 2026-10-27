@@ -229,7 +229,7 @@ impl InputData {
         let bcf_gt = if args.from_bin {
             Some(BcfGenotype::load_from_file(&args.data_file1)?)
         } else if args.from_bcf {
-            let bcf_filter_args = match args.bcf_filter_config.as_ref() {
+            let mut bcf_filter_args = match args.bcf_filter_config.as_ref() {
                 Some(dom_gt_config_path) => BcfFilterArgs::new_from_toml_file(dom_gt_config_path),
                 None => {
                     let config = BcfFilterArgs::new_from_builtin()?;
@@ -245,6 +245,10 @@ impl InputData {
                     Ok(config)
                 }
             }?;
+            // the command-line flag wins over the filter-config value
+            if let Some(absent_ad_as) = args.absent_ad_as {
+                bcf_filter_args.absent_ad_as = absent_ad_as;
+            }
             let bcf_gt = BcfGenotype::new_from_processing_bcf(
                 &args.bcf_read_mode,
                 &bcf_filter_args,

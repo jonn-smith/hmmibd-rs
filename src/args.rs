@@ -103,6 +103,23 @@ pub struct Arguments {
     #[arg(long, requires = "grp_from_bcf", help_heading = "input data options")]
     pub bcf_filter_config: Option<String>,
 
+    /// Optional: in --bcf-read-mode dominant-allele, how to call a genotype
+    /// whose FORMAT/AD values are entirely absent when FORMAT/GT cannot
+    /// disambiguate it either (GT absent). "missing" treats it as missing
+    /// data (-1); "ref" treats it as homozygous reference (allele 0).
+    /// "ref" fabricates calls and is appropriate only for callsets whose
+    /// convention is "no AD means reference"; for joint callsets where
+    /// covered hom-refs carry real AD, absent AD means no coverage, so use
+    /// "missing". When set, this overrides the `absent_ad_as` value from
+    /// --bcf-filter-config.
+    #[arg(
+        long,
+        value_enum,
+        requires = "grp_from_bcf",
+        help_heading = "input data options"
+    )]
+    pub absent_ad_as: Option<AbsentAdAs>,
+
     /// Optional: output prefix. If not specified, the prefix from the `-i`
     /// option will be used. Note: When reading genotype from stdin, this option
     /// must be specified.
@@ -261,6 +278,22 @@ pub enum BcfReadMode {
     EachPloidy,
 }
 
+/// How dominant-allele mode calls a genotype that has no FORMAT/AD data and
+/// whose FORMAT/GT is absent as well.
+#[derive(
+    Default, Debug, ValueEnum, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum AbsentAdAs {
+    /// treat as missing data (-1); conservative, the sample is dropped at
+    /// that site
+    #[default]
+    Missing,
+    /// treat as homozygous reference (allele 0); fabricates a call, use only
+    /// when the callset's convention is "no AD means reference"
+    Ref,
+}
+
 impl Arguments {
     pub fn new_for_test() -> Self {
         Self {
@@ -269,6 +302,7 @@ impl Arguments {
             from_bcf: false,
             from_bin: false,
             bcf_filter_config: None,
+            absent_ad_as: None,
             freq_file1: Some(String::from("c/samp_data/freqs_pf3k_Cambodia_13.txt")),
             freq_file2: Some(String::from("c/samp_data/freqs_pf3k_Ghana_13.txt")),
             max_iter: 5,
@@ -311,6 +345,7 @@ impl Arguments {
             from_bcf: true,
             from_bin: false,
             bcf_filter_config: Some(String::from("testdata/pf7_data/dom_gt_config.toml")),
+            absent_ad_as: None,
             freq_file1: None,
             freq_file2: None,
             max_iter: 5,
